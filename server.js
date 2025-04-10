@@ -1,10 +1,10 @@
-// ✅ Combined and final version of `server.js`
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs');
+const bodyParser = require('body-parser'); // For parsing form data
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,11 +13,38 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.urlencoded({ extended: true }));  // Added for parsing POST form data
+
+// ✅ In-memory user credentials (for simplicity)
+const users = [
+    { username: 'admin', password: 'password123' },
+    { username: 'user', password: 'userpass' }
+];
 
 // ✅ Routes for features originally from PHP files
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/sensor'));
 app.use('/api', require('./routes/disableAlarm'));
+
+// ✅ Login routes
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html')); // Serve the login form
+});
+
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Check if the username and password match
+  const user = users.find(u => u.username === username && u.password === password);
+
+  if (user) {
+    // Successful login, redirect to home or dashboard
+    res.redirect('/'); // Adjust as per your route
+  } else {
+    // Invalid credentials
+    res.send('Invalid credentials, please try again.');
+  }
+});
 
 // ✅ Catch-all to serve index.html
 app.get('*', (req, res) => {
