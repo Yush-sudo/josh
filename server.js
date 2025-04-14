@@ -9,17 +9,19 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// In-memory user store
 const users = [
-    { username: 'admin', password: 'password123' },
-    { username: 'user', password: 'userpass' }
+  { username: 'admin', password: 'password123' },
+  { username: 'user', password: 'userpass' }
 ];
 
-// Other routes that don't need wss
+// Routes that don't require WebSocket
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/sensor'));
 app.use('/api', require('./routes/disableAlarm'));
@@ -28,10 +30,19 @@ app.use('/api', require('./routes/disableAlarm'));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// ✅ Mount intrusionAlert route AFTER initializing wss
+// ✅ WebSocket broadcast utility
+function broadcast(type, data) {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type, data }));
+    }
+  });
+}
+
+// ✅ Mount intrusionAlert route with WebSocket injection
 app.use('/api', require('./routes/intrusionAlert')(wss));
 
-// Login and catch-all routes
+// Login routes
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -43,21 +54,13 @@ app.post('/login', (req, res) => {
   else res.send('Invalid credentials, please try again.');
 });
 
+// Catch-all route for SPA
 app.get('*', (req, res) => {
   console.log("📢 Request received for:", req.url);
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// WebSocket broadcast function
-function broadcast(type, data) {
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type, data }));
-    }
-  });
-}
-
-// Watch alarm.txt
+// ✅ Monitor alarm.txt and broadcast alerts
 fs.watchFile("alarm.txt", () => {
   try {
     const alarmStatus = fs.readFileSync("alarm.txt", "utf8").trim();
@@ -69,7 +72,7 @@ fs.watchFile("alarm.txt", () => {
   }
 });
 
-// ✅ Start server
+// ✅ Start the server
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
