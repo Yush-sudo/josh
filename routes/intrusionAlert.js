@@ -1,18 +1,18 @@
 const express = require('express');
 
-module.exports = (wss) => {
+module.exports = function(wss) {
   const router = express.Router();
 
   router.post('/intrusion-alert', (req, res) => {
     const alert = req.body;
-    console.log("📡 Received Intrusion Alert:", alert);
+    console.log("📢 Received Intrusion Alert:", alert);
 
-    // ✅ Broadcast to connected WebSocket clients
+    // Broadcast the alert to all WebSocket clients
     wss.clients.forEach(client => {
-      if (client.readyState === 1) {
+      if (client.readyState === 1) { // WebSocket.OPEN = 1
         client.send(JSON.stringify({
           type: "intrusionAlert",
-          data: alert
+          data: { alert: true }
         }));
       }
     });
