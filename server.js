@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 // ✅ Middleware
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));  // Serve static files from public folder
 app.use(bodyParser.urlencoded({ extended: true }));  // Added for parsing POST form data
 
 // ✅ In-memory user credentials (for simplicity)
@@ -25,10 +25,12 @@ const users = [
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/sensor'));
 app.use('/api', require('./routes/disableAlarm'));
+app.use('/api', require('./routes/intrusionAlert')(wss));
 
 // ✅ Login routes
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html')); // Serve the login form
+  // Serve the login form from the public directory
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.post('/login', (req, res) => {
@@ -39,7 +41,7 @@ app.post('/login', (req, res) => {
 
   if (user) {
     // Successful login, redirect to home or dashboard
-    res.redirect('/'); // Adjust as per your route
+    res.redirect('/'); // Adjust to your specific route after login
   } else {
     // Invalid credentials
     res.send('Invalid credentials, please try again.');
@@ -61,7 +63,7 @@ server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
-// ✅ Broadcast function
+// ✅ Broadcast function to send data to all connected WebSocket clients
 function broadcast(type, data) {
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
@@ -70,7 +72,7 @@ function broadcast(type, data) {
   });
 }
 
-// ✅ Watch `alarm.txt`
+// ✅ Watch the 'alarm.txt' file for changes
 fs.watchFile("alarm.txt", () => {
   try {
     const alarmStatus = fs.readFileSync("alarm.txt", "utf8").trim();
