@@ -42,9 +42,10 @@ const wss = new WebSocket.Server({ server });
 
 // ✅ WebSocket broadcast utility
 function broadcast(type, data) {
+  const message = JSON.stringify({ type, data });
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type, data }));
+      client.send(message);
     }
   });
 }
@@ -102,18 +103,30 @@ fs.watchFile("alarm.txt", () => {
 });
 
 // ✅ Fetch and broadcast sales data from Pisofi Admin
-const pisofiApiUrl = 'http://10.0.0.1/admin/sales/daily'; // Replace with actual endpoint
+const pisofiApiUrl = 'http://10.0.0.1/admin/sales/daily'; // Replace if there's a better API endpoint
 
 async function fetchSalesData() {
   try {
     const response = await fetch(pisofiApiUrl, {
       headers: {
-        'Authorization': 'Bearer YOUR_API_KEY' // Replace with your actual API key
+        'Authorization': 'Bearer YOUR_API_KEY' // Replace with real token if needed
       }
     });
 
-    if (!response.ok) throw new Error('Failed to fetch sales data');
-    const data = await response.json();
+    const contentType = response.headers.get('content-type');
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+
+    let data;
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      console.warn('⚠️ Received non-JSON response from Pisofi:', text.slice(0, 100));
+      return;
+    }
 
     const salesData = {
       type: 'salesUpdate',
@@ -125,8 +138,9 @@ async function fetchSalesData() {
     };
 
     broadcast('salesUpdate', salesData.data);
+    console.log("📤 Broadcasted sales data:", salesData.data);
   } catch (error) {
-    console.error('Error fetching sales data:', error);
+    console.error('❌ Error fetching sales data:', error.message);
   }
 }
 
@@ -136,5 +150,5 @@ setInterval(fetchSalesData, 60000);
 // ✅ Start server
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  fetchSalesData(); // Fetch once on start
+  fetchSalesData(); // Initial fetch on server start
 });
