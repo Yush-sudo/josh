@@ -103,44 +103,46 @@ fs.watchFile("alarm.txt", () => {
 });
 
 // ✅ Fetch and broadcast sales data from Pisofi Admin
-const pisofiApiUrl = 'http://10.0.0.1/admin/sales/daily'; // Replace if there's a better API endpoint
+const pisofiApiUrl = 'http://10.0.0.1/admin/sales/daily'; // Replace with the actual API endpoint
 
 async function fetchSalesData() {
   try {
     const response = await fetch(pisofiApiUrl, {
       headers: {
-        'Authorization': 'Bearer YOUR_API_KEY' // Replace with real token if needed
+        'Authorization': 'Bearer CVJeTuYBsxAwWm8tozK55xSevS5tWROMNDn4U4odI2keqLaV4mO3uuDAf2QNf5POFESJeZzdiPBYjeASYOE4slTTu0pp0e6jwQAKVvMH955Le9JopNsaktvMXEDUoFYoFVDynuB2eZSp2LItvK0jHr19NiRZ1eyVzYUJzIgGKh3aJU3a0pd8zZJIO13WcGd9Qea5PXsFrmaNm5IHbX5WSrJeegnA6d6MWzSisIw54b8WBrsBb6P0JDFOE3EcyQzXbtIMgkBVHgrZRqvETSfQ9NtWMZrIIKiibvwYZlLgYyrqKUFHxWL4LgG642CXt6NVHv3M1fYJPCyMGMVz5GwJaoTlydswDYY5DTuzdbbaoA00EeFKEpB1KE1LpLsQydjEUWTLNU6NLCPeQyahNUu5hPvtA6N2P0p3dZ1Fuzb8t9zcq2W7lnd9c5uJkwFbOjZdTKCPI0y3m7ko1KO14vK5EJFbh0rBmdlUgffAVCCeD4vgZP6TQPV7ge6m83me8WqkwAT4T8NPzIINBI9LCjCl6zy0Gl25qWOf22v0BJvBpOhZPc5C3FKBUjdAJZ7dECRJlYfLbCOpBpQVPygtlZ1ThfjHcRkPj84bnfjtJRivGUXj0SxO1tndTfTv3Op43gukDA6Pr35C5QVU8zNiaKxgtPjLDKIYMcnuXghI1L8rGq3zxCq3UEXuuc0TrlgbvZbouIcaowMKnrsHD0ztTHAyg4Vlkg49iEh2Ou5H5X7SkB8c6YVwu1zt8SjKPXEglGPBaUvpeIGWe0qsOgw996qpTnPdYGQLDJrrKOVyk3EPxULGO5onbz9GvlRzTUypFb2yfcXJF9kItBgzqzINKf9AFOygNiPzwutNcFEnw43a9U73JY0sXKooUvChvB1VDhudv7gihfzUOCEpE7mOzA4jp4Rc7pcLKOfdmjm5sq6UYgQAPkTW2cLImMu0sFcmBq5JlAWgrSzKUQsxDHrrPnt0yvHM43JP8S9p9lsyzRcpdJzOx84pmSKQbig89NZp2JpU' // Real API token
       }
     });
 
     const contentType = response.headers.get('content-type');
+    console.log('Response status:', response.status);
+    console.log('Content-Type:', contentType);
 
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status}`);
     }
 
-    let data;
     if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
+      const data = await response.json();
+      const salesData = {
+        type: 'salesUpdate',
+        data: {
+          daily: data.daily_sales || 'N/A',
+          weekly: data.weekly_sales || 'N/A',
+          monthly: data.monthly_sales || 'N/A'
+        }
+      };
+
+      broadcast('salesUpdate', salesData.data);
+      console.log("📤 Broadcasted sales data:", salesData.data);
     } else {
       const text = await response.text();
-      console.warn('⚠️ Received non-JSON response from Pisofi:', text.slice(0, 100));
-      return;
+      console.warn('⚠️ Received non-JSON response from Pisofi:', text.slice(0, 100)); // Log first 100 chars of response body
     }
 
-    const salesData = {
-      type: 'salesUpdate',
-      data: {
-        daily: data.daily_sales || 'N/A',
-        weekly: data.weekly_sales || 'N/A',
-        monthly: data.monthly_sales || 'N/A'
-      }
-    };
-
-    broadcast('salesUpdate', salesData.data);
-    console.log("📤 Broadcasted sales data:", salesData.data);
   } catch (error) {
     console.error('❌ Error fetching sales data:', error.message);
+    // Retry after 10 seconds if an error occurs
+    setTimeout(fetchSalesData, 10000);
   }
 }
 
