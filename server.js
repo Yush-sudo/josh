@@ -4,8 +4,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs');
+const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
-const session = require('express-session'); // 🔐 Sessions
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -100,7 +101,40 @@ fs.watchFile("alarm.txt", () => {
   }
 });
 
+// ✅ Fetch and broadcast sales data from Pisofi Admin
+const pisofiApiUrl = 'https://pisofi-admin.com/api/sales'; // Replace with actual endpoint
+
+async function fetchSalesData() {
+  try {
+    const response = await fetch(pisofiApiUrl, {
+      headers: {
+        'Authorization': 'Bearer YOUR_API_KEY' // Replace with your actual API key
+      }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch sales data');
+    const data = await response.json();
+
+    const salesData = {
+      type: 'salesUpdate',
+      data: {
+        daily: data.daily_sales || 'N/A',
+        weekly: data.weekly_sales || 'N/A',
+        monthly: data.monthly_sales || 'N/A'
+      }
+    };
+
+    broadcast('salesUpdate', salesData.data);
+  } catch (error) {
+    console.error('Error fetching sales data:', error);
+  }
+}
+
+// Fetch sales data every 60 seconds
+setInterval(fetchSalesData, 60000);
+
 // ✅ Start server
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  fetchSalesData(); // Fetch once on start
 });
