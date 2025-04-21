@@ -102,7 +102,7 @@ fs.watchFile("alarm.txt", () => {
 });
 
 // ✅ Fetch and broadcast sales data from Pisofi Admin
-const pisofiApiUrl = 'https://pisofi-admin.com/api/sales'; // Replace with actual endpoint
+const pisofiApiUrl = 'http://10.0.0.1/admin/sales/daily'; // Replace with actual endpoint
 
 async function fetchSalesData() {
   try {
