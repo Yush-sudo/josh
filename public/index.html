@@ -3,39 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vending Machine Dashboard</title>
+    <title>PisoFi Vending Machine Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f7f7f7; text-align: center; }
-        .container { width: 90%; margin: 20px auto; }
-        .header { background-color: #1e2a3a; color: white; padding: 15px; border-radius: 8px; }
-        .header h1 { margin: 0; font-size: 2rem; }
-        .stats-card { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
-        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); width: 250px; }
-        .stat-card h3 { margin: 0; font-weight: 600; }
-        .stat-card p { font-size: 1.5rem; margin: 10px 0; color: #2e7d32; }
-        .notification { display: none; padding: 20px; background: #ffcc00; font-weight: 600; border-radius: 8px; margin-top: 30px; }
-        .btn { padding: 10px 20px; background: #1e2a3a; color: white; border-radius: 5px; cursor: pointer; margin-top: 15px; }
-        .footer { margin-top: 30px; font-size: 0.9rem; color: #888; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f7f7f7; 
+        }
+        .container { 
+            width: 95%; 
+            margin: 20px auto; 
+        }
+        .header { 
+            background-color: #1e2a3a; 
+            color: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { 
+            margin: 0; 
+            font-size: 2rem; 
+        }
+        .stats-card { 
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+            flex-wrap: wrap; 
+            margin-top: 20px; 
+        }
+        .stat-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+            width: 250px; 
+        }
+        .stat-card h3 { 
+            margin: 0; 
+            font-weight: 600; 
+        }
+        .stat-card p { 
+            font-size: 1.5rem; 
+            margin: 10px 0; 
+            color: #2e7d32; 
+        }
+        .notification { 
+            display: none; 
+            padding: 20px; 
+            background: #ffcc00; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            margin-top: 30px; 
+        }
+        .btn { 
+            padding: 10px 20px; 
+            background: #1e2a3a; 
+            color: white; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-top: 15px; 
+        }
+        .card {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #1e2a3a;
+            color: white;
+            font-weight: 600;
+            padding: 12px 15px;
+            border-radius: 8px 8px 0 0;
+        }
+        .device-selector {
+            min-width: 200px;
+        }
+        .footer { 
+            margin-top: 30px; 
+            font-size: 0.9rem; 
+            color: #888; 
+            text-align: center;
+        }
+        .status-online {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status-offline {
+            background-color: #F44336;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status-alert {
+            background-color: #FF9800;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .control-panel {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .control-btn {
+            background: #1e2a3a;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .control-btn:hover {
+            background: #344861;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header"><h1>Vending Machine Dashboard</h1></div>
-
-        <div class="stats-card">
-            <div class="stat-card"><h3>💰 Daily Sales</h3><p id="daily-sales">50</p></div>
-            <div class="stat-card"><h3>💰 Weekly Sales</h3><p id="weekly-sales">149</p></div>
-            <div class="stat-card"><h3>💰 Monthly Sales</h3><p id="monthly-sales">289</p></div>
+        <div class="header">
+            <h1>PisoFi Vending Machine Dashboard</h1>
+            <div class="device-selector">
+                <select id="device-list" class="form-select">
+                    <option value="" disabled selected>Select Device</option>
+                </select>
+            </div>
         </div>
 
-        <div class="notification" id="alert-notification">🚨 Intrusion detected! 
-            <button class="btn" id="disable-alarm">Turn Off Alarm</button>
-        </div>
-
-        <div class="footer"><p>Vending Machine Monitoring System - Powered by GROUP 1</p></div>
-    </div>
-
-    <script src="app.js"></script>
-</body>
-</html>
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Sales Overview</div>
+                    <div class="card-body">
+                        <div class="stats-card">
+                            <div class="stat-card"><h3>💰 Daily Sales</h3><p id="daily-sales">50</p></div>
+                            <div class="stat-card"><h3>💰 Weekly Sales</h3><p id="weekly-sales">149</p></div>
+                            <div class="stat-card"><h3>💰 Monthly Sales</h3><p id="monthly-sales">289</p></div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="sales-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Device Status</div>
+                    <div class="card-body">
+                        <h5>Current Status: <span id="device-status" class="status-online">ONLINE</span></h5>
+                        
+                        <hr>
+                        
+                        <h5>Intrusion Detection</h5>
+                        <p>Current Setting: <span id="sensors-status" class="status-online">ON</span></p>
+                        <div class="control-panel">
+                            <button id="sensors-on" class="control-btn">Enable</button>
+                            <button id="sensors-off" class="control-btn">Disable</button>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5>Coin Rejection</h5>
+                        <p>Current Setting: <span id="coin-rejection-status" class="status-offline">OFF</span></p>
+                        <div class="control-panel">
+                            <button id="coin-rejection-on" class="control-btn">Enable</button>
+                            <button id="coin-rejection-off" class="control-btn">Disable</button>
