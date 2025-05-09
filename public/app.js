@@ -1,6 +1,6 @@
 // --- Final Updated Web App JavaScript Code ---
 
-const ESP32_IP = "cc:7b:5c:24:f2:f8"; // Replace with actual ESP32 IP
+const ESP32_IP = "192.168.1.10"; // Replace with actual ESP32 IP
 
 // Fetch Sales Data
 async function fetchSalesData() {
@@ -72,7 +72,20 @@ document.getElementById("coin-rejection-off").addEventListener("click", () => {
   document.getElementById("coin-rejection-status").className = "status-offline";
 });
 
-// Intrusion Alert Check from backend
+// WebSocket connection for real-time intrusion alerts
+const socket = new WebSocket("ws://localhost:3000"); // Change to your server URL in production
+
+socket.onmessage = function (event) {
+  const message = JSON.parse(event.data);
+  if (message.type === "intrusionAlert") {
+    const isIntrusion = message.data.alert;
+    if (isIntrusion) {
+      alert("🚨 Intrusion Detected!");
+    }
+  }
+};
+
+// Intrusion Alert Check from backend (optional backup)
 async function checkIntrusionAlerts() {
   try {
     const response = await fetch('https://josh-780a.onrender.com/api/recent-alerts');
