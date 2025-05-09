@@ -6,7 +6,6 @@
     <title>PisoFi Vending Machine Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { 
             font-family: 'Poppins', sans-serif; 
@@ -29,45 +28,6 @@
             margin: 0; 
             font-size: 2rem; 
         }
-        .stats-card { 
-            display: flex; 
-            justify-content: center; 
-            gap: 20px; 
-            flex-wrap: wrap; 
-            margin-top: 20px; 
-        }
-        .stat-card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
-            width: 250px; 
-        }
-        .stat-card h3 { 
-            margin: 0; 
-            font-weight: 600; 
-        }
-        .stat-card p { 
-            font-size: 1.5rem; 
-            margin: 10px 0; 
-            color: #2e7d32; 
-        }
-        .notification { 
-            display: none; 
-            padding: 20px; 
-            background: #ffcc00; 
-            font-weight: 600; 
-            border-radius: 8px; 
-            margin-top: 30px; 
-        }
-        .btn { 
-            padding: 10px 20px; 
-            background: #1e2a3a; 
-            color: white; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            margin-top: 15px; 
-        }
         .card {
             margin-bottom: 20px;
             border-radius: 8px;
@@ -80,15 +40,6 @@
             padding: 12px 15px;
             border-radius: 8px 8px 0 0;
         }
-        .device-selector {
-            min-width: 200px;
-        }
-        .footer { 
-            margin-top: 30px; 
-            font-size: 0.9rem; 
-            color: #888; 
-            text-align: center;
-        }
         .status-online {
             background-color: #4CAF50;
             color: white;
@@ -98,13 +49,6 @@
         }
         .status-offline {
             background-color: #F44336;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .status-alert {
-            background-color: #FF9800;
             color: white;
             padding: 5px 10px;
             border-radius: 4px;
@@ -126,44 +70,15 @@
         .control-btn:hover {
             background: #344861;
         }
-        .chart-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>PisoFi Vending Machine Dashboard</h1>
-            <div class="device-selector">
-                <select id="device-list" class="form-select">
-                    <option value="" disabled selected>Select Device</option>
-                </select>
-            </div>
         </div>
 
         <div class="row mt-4">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">Sales Overview</div>
-                    <div class="card-body">
-                        <div class="stats-card">
-                            <div class="stat-card"><h3>💰 Daily Sales</h3><p id="daily-sales">50</p></div>
-                            <div class="stat-card"><h3>💰 Weekly Sales</h3><p id="weekly-sales">149</p></div>
-                            <div class="stat-card"><h3>💰 Monthly Sales</h3><p id="monthly-sales">289</p></div>
-                        </div>
-                        
-                        <div class="chart-container">
-                            <canvas id="sales-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">Device Status</div>
@@ -185,4 +100,53 @@
                         <p>Current Setting: <span id="coin-rejection-status" class="status-offline">OFF</span></p>
                         <div class="control-panel">
                             <button id="coin-rejection-on" class="control-btn">Enable</button>
-                            <button id="coin-rejection-off" class="control-btn">Disable</button>
+                            <button id="coin-rejection-off" class="control-btn">Disable</button> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for the DOM to be fully loaded before adding event listeners
+        document.addEventListener("DOMContentLoaded", function () {
+            // Get the DOM elements
+            const intrusionStatus = document.getElementById("sensors-status");
+            const intrusionDisableBtn = document.getElementById("sensors-off");
+            const coinStatus = document.getElementById("coin-rejection-status");
+            const coinDisableBtn = document.getElementById("coin-rejection-off");
+
+            // When the "Disable" button for Intrusion Detection is clicked
+            intrusionDisableBtn.addEventListener("click", function () {
+                // Disable Intrusion Detection
+                intrusionStatus.textContent = "OFF";  // Change the text to OFF
+                intrusionStatus.className = "status-offline"; // Change to OFF styling
+                
+                // If Intrusion is disabled, Coin Rejection also should be disabled
+                coinStatus.textContent = "OFF";  // Change the text to OFF
+                coinStatus.className = "status-offline"; // Change to OFF styling
+            });
+
+            // When the "Disable" button for Coin Rejection is clicked
+            coinDisableBtn.addEventListener("click", function () {
+                // Disable Coin Rejection independently
+                coinStatus.textContent = "OFF";  // Change the text to OFF
+                coinStatus.className = "status-offline"; // Change to OFF styling
+            });
+
+            // When the "Enable" button for Intrusion Detection is clicked
+            document.getElementById("sensors-on").addEventListener("click", function () {
+                intrusionStatus.textContent = "ON";  // Change the text to ON
+                intrusionStatus.className = "status-online"; // Change to ON styling
+            });
+
+            // When the "Enable" button for Coin Rejection is clicked
+            document.getElementById("coin-rejection-on").addEventListener("click", function () {
+                coinStatus.textContent = "ON";  // Change the text to ON
+                coinStatus.className = "status-online"; // Change to ON styling
+            });
+        });
+    </script>
+</body>
+</html>
