@@ -1,6 +1,6 @@
 // --- Final Updated Web App JavaScript Code ---
 
-const ESP32_IP = "192.168.1.10"; // Replace with actual ESP32 IP
+const ESP32_IP = "cc:7b:5c:24:f2:f8"; // Replace with actual ESP32 IP
 
 // Fetch Sales Data
 async function fetchSalesData() {
