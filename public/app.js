@@ -1,108 +1,40 @@
-// --- Final Updated Web App JavaScript Code ---
+const socket = new WebSocket("ws://" + window.location.host);
 
-const ESP32_IP = "192.168.1.10"; // Replace with actual ESP32 IP
+socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
 
-// Fetch Sales Data
-async function fetchSalesData() {
-  try {
-    const response = await fetch(`http://${ESP32_IP}/api/get-sales`);
-    const data = await response.json();
-
-    document.getElementById('daily-sales').textContent = `₱${data.daily}`;
-    document.getElementById('weekly-sales').textContent = `₱${data.weekly}`;
-    document.getElementById('monthly-sales').textContent = `₱${data.monthly}`;
-  } catch (error) {
-    console.error("Error fetching sales data:", error);
-  }
-}
-
-setInterval(fetchSalesData, 10000);
-fetchSalesData();
-
-// Fetch Sensor Status
-async function fetchSensorStatus() {
-  try {
-    const response = await fetch(`http://${ESP32_IP}/api/get-sensor-status`);
-    const data = await response.json();
-    const statusEl = document.getElementById('sensors-status');
-    if (data.sensors === "enabled") {
-      statusEl.textContent = "ON";
-      statusEl.className = "status-online";
-    } else {
-      statusEl.textContent = "OFF";
-      statusEl.className = "status-offline";
+    if (message.type === "salesUpdate") {
+        document.getElementById("daily-sales").innerText = message.data.daily || 'N/A';
+        document.getElementById("weekly-sales").innerText = message.data.weekly || 'N/A';
+        document.getElementById("monthly-sales").innerText = message.data.monthly || 'N/A';
     }
-  } catch (error) {
-    console.error("Error fetching sensor status:", error);
-  }
-}
 
-setInterval(fetchSensorStatus, 5000);
-fetchSensorStatus();
-
-// Toggle Sensors (both buttons use the same endpoint)
-document.getElementById("sensors-on").addEventListener("click", async () => {
-  await toggleSensors();
-});
-
-document.getElementById("sensors-off").addEventListener("click", async () => {
-  await toggleSensors();
-});
-
-async function toggleSensors() {
-  try {
-    const response = await fetch(`http://${ESP32_IP}/api/toggle-sensors`, {
-      method: 'POST'
-    });
-    const data = await response.json();
-    fetchSensorStatus();
-  } catch (error) {
-    console.error("Error toggling sensors:", error);
-  }
-}
-
-// Coin Rejection toggles (UI only, no hardware integration shown)
-document.getElementById("coin-rejection-on").addEventListener("click", () => {
-  document.getElementById("coin-rejection-status").textContent = "ON";
-  document.getElementById("coin-rejection-status").className = "status-online";
-});
-
-document.getElementById("coin-rejection-off").addEventListener("click", () => {
-  document.getElementById("coin-rejection-status").textContent = "OFF";
-  document.getElementById("coin-rejection-status").className = "status-offline";
-});
-
-// WebSocket connection for real-time intrusion alerts
-const socket = new WebSocket("ws://localhost:3000"); // Change to your server URL in production
-
-socket.onmessage = function (event) {
-  const message = JSON.parse(event.data);
-  if (message.type === "intrusionAlert") {
-    const isIntrusion = message.data.alert;
-    if (isIntrusion) {
-      alert("🚨 Intrusion Detected!");
+    if (message.type === "intrusionAlert") {
+        if (message.data.alert) {
+            document.getElementById("alert-notification").style.display = "block";
+            playAlarm();
+        } else {
+            document.getElementById("alert-notification").style.display = "none";
+        }
     }
-  }
 };
 
-// Intrusion Alert Check from backend (optional backup)
-async function checkIntrusionAlerts() {
-  try {
-    const response = await fetch('https://josh-780a.onrender.com/api/recent-alerts');
-    const alerts = await response.json();
+document.getElementById("disable-alarm").addEventListener("click", () => {
+    fetch("/api/disable-alarm", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer supersecure123"
+        }
+    })
+    .then(response => response.json())
+    .then(() => document.getElementById("alert-notification").style.display = "none")
+    .catch(error => console.error("Error disabling alarm:", error));
+});
 
-    if (alerts.length > 0) {
-      alerts.forEach(alert => {
-        alertUser(alert.triggered_by, alert.timestamp);
-      });
+function playAlarm() {
+    const audio = new Audio('alarm.mp3');
+    audio.play();
+    if (navigator.vibrate) {
+        navigator.vibrate([500, 300, 500]);
     }
-  } catch (error) {
-    console.error("Error checking alerts:", error);
-  }
 }
-
-function alertUser(sensor, timestamp) {
-  alert(`Intrusion detected by: ${sensor} at ${new Date(timestamp).toLocaleString()}`);
-}
-
-setInterval(checkIntrusionAlerts, 5000);
